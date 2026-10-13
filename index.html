@@ -1,0 +1,280 @@
+
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тік орын ауыстыру шифрі</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 25px 15px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #e8f0ff, #e7fff3);
+            color: #172554;
+        }
+
+        .container {
+            max-width: 750px;
+            margin: 20px auto;
+            padding: 28px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 8px 30px #243b531a;
+        }
+
+        h1 {
+            text-align: center;
+            color: #155e45;
+            font-size: 27px;
+        }
+
+        .description {
+            text-align: center;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        label {
+            display: block;
+            margin: 20px 0 8px;
+            font-weight: bold;
+        }
+
+        textarea, input {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 9px;
+            font-size: 16px;
+            font-family: Arial, sans-serif;
+        }
+
+        textarea {
+            min-height: 125px;
+            resize: vertical;
+        }
+
+        textarea:focus, input:focus {
+            outline: 2px solid #86bda6;
+            border-color: #155e45;
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            min-width: 130px;
+            padding: 13px;
+            border: none;
+            border-radius: 9px;
+            background: #157347;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #105c39;
+        }
+
+        button.secondary {
+            background: #334155;
+        }
+
+        button.secondary:hover {
+            background: #1e293b;
+        }
+
+        #message {
+            margin-top: 15px;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .note {
+            margin-top: 22px;
+            padding: 13px;
+            background: #f1f5f9;
+            border-radius: 9px;
+            color: #475569;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px 16px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="container">
+        <h1>Ақпаратты қорғау жүйесі</h1>
+
+        <p class="description">
+            Тік орын ауыстыру шифры арқылы
+            мәтінді шифрлаңыз және кері шифрлаңыз.
+        </p>
+
+        <label for="inputText">Мәтінді енгізіңіз:</label>
+        <textarea id="inputText"
+            placeholder="Мысалы: СӘЛЕМ ӘЛЕМ"></textarea>
+
+        <label for="key">Кілт — бағандар саны:</label>
+        <input id="key" type="number"
+            min="2" max="20" value="3">
+
+        <div class="buttons">
+            <button onclick="encryptText()">Шифрлау</button>
+            <button onclick="decryptText()">Кері шифрлау</button>
+            <button class="secondary"
+                onclick="copyResult()">Нәтижені көшіру</button>
+        </div>
+
+        <label for="outputText">Нәтиже:</label>
+        <textarea id="outputText" readonly
+            placeholder="Нәтиже осында шығады"></textarea>
+
+        <p id="message" role="status" aria-live="polite"></p>
+
+        <div class="note">
+            <strong>Алгоритм:</strong> мәтін кестеге жолдар
+            бойынша жазылады, содан кейін бағандар жоғарыдан
+            төмен қарай оқылады. Кері шифрлау бастапқы
+            мәтінді қалпына келтіреді.
+        </div>
+    </main>
+
+    <script>
+        function getKey() {
+            const key = Number(
+                document.getElementById("key").value
+            );
+
+            if (!Number.isInteger(key) || key < 2 || key > 20) {
+                throw new Error(
+                    "Кілт 2 мен 20 аралығындағы бүтін сан болуы керек."
+                );
+            }
+
+            return key;
+        }
+
+        // Мәтінді шифрлау
+        function encryptText() {
+            try {
+                const text =
+                    document.getElementById("inputText").value;
+                const columns = getKey();
+                const chars = Array.from(text);
+                let result = "";
+
+                for (let col = 0; col < columns; col++) {
+                    for (let i = col; i < chars.length; i += columns) {
+                        result += chars[i];
+                    }
+                }
+
+                document.getElementById("outputText").value = result;
+                document.getElementById("message").textContent =
+                    "Мәтін сәтті шифрланды.";
+            } catch (error) {
+                document.getElementById("message").textContent =
+                    error.message;
+            }
+        }
+
+        // Шифрланған мәтінді бастапқы қалпына келтіру
+        function decryptText() {
+            try {
+                const text =
+                    document.getElementById("inputText").value;
+                const columns = getKey();
+                const chars = Array.from(text);
+                const length = chars.length;
+
+                const fullRows = Math.floor(length / columns);
+                const extra = length % columns;
+
+                const columnData = [];
+                let position = 0;
+
+                for (let col = 0; col < columns; col++) {
+                    const size = fullRows + (col < extra ? 1 : 0);
+
+                    columnData.push(
+                        chars.slice(position, position + size)
+                    );
+
+                    position += size;
+                }
+
+                let result = "";
+
+                for (let row = 0; row < Math.ceil(length / columns); row++) {
+                    for (let col = 0; col < columns; col++) {
+                        if (columnData[col][row] !== undefined) {
+                            result += columnData[col][row];
+                        }
+                    }
+                }
+
+                document.getElementById("outputText").value = result;
+                document.getElementById("message").textContent =
+                    "Мәтін кері шифрланды.";
+            } catch (error) {
+                document.getElementById("message").textContent =
+                    error.message;
+            }
+        }
+
+        // Нәтижені көшіру
+        async function copyResult() {
+            const output =
+                document.getElementById("outputText").value;
+            const message = document.getElementById("message");
+
+            if (!output) {
+                message.textContent = "Алдымен нәтиже шығарыңыз.";
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(output);
+                message.textContent = "Нәтиже көшірілді.";
+            } catch {
+                const field = document.getElementById("outputText");
+                field.focus();
+                field.select();
+                message.textContent =
+                    "Мәтін белгіленді. Ctrl+C арқылы көшіріңіз.";
+            }
+        }
+    </script>
+</body>
+</html>
